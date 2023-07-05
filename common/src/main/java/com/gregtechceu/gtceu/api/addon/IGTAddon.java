@@ -1,5 +1,7 @@
 package com.gregtechceu.gtceu.api.addon;
 
+import com.gregtechceu.gtceu.api.addon.events.KJSRecipeKeyEvent;
+
 public interface IGTAddon {
 
     void initializeAddon();
@@ -37,6 +39,10 @@ public interface IGTAddon {
     }
 
     default void registerVeinGenerators() {
+
+    }
+
+    default void registerRecipeKeys(KJSRecipeKeyEvent event) {
 
     }
 }
