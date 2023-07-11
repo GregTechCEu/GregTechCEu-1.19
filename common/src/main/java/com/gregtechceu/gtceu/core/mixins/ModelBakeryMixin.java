@@ -2,18 +2,25 @@ package com.gregtechceu.gtceu.core.mixins;
 
 import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.block.MaterialBlock;
+import com.gregtechceu.gtceu.api.block.MaterialPipeBlock;
 import com.gregtechceu.gtceu.api.data.chemical.material.Material;
 import com.gregtechceu.gtceu.api.data.chemical.material.info.MaterialFlags;
 import com.gregtechceu.gtceu.api.data.chemical.material.info.MaterialIconSet;
 import com.gregtechceu.gtceu.api.data.chemical.material.info.MaterialIconType;
 import com.gregtechceu.gtceu.api.data.chemical.material.properties.FluidProperty;
 import com.gregtechceu.gtceu.api.data.chemical.material.properties.PropertyKey;
+import com.gregtechceu.gtceu.api.data.chemical.material.properties.WireProperties;
 import com.gregtechceu.gtceu.api.data.tag.TagPrefix;
 import com.gregtechceu.gtceu.api.registry.GTRegistries;
+import com.gregtechceu.gtceu.client.model.PipeModel;
 import com.gregtechceu.gtceu.client.renderer.block.MaterialBlockRenderer;
 import com.gregtechceu.gtceu.client.renderer.block.OreBlockRenderer;
+import com.gregtechceu.gtceu.client.renderer.block.PipeBlockRenderer;
 import com.gregtechceu.gtceu.client.renderer.item.TagPrefixItemRenderer;
+import com.gregtechceu.gtceu.common.block.CableBlock;
+import com.gregtechceu.gtceu.common.block.FluidPipeBlock;
 import com.gregtechceu.gtceu.common.data.GTBlocks;
+import com.gregtechceu.gtceu.common.pipelike.cable.Insulation;
 import com.gregtechceu.gtceu.core.MixinHelpers;
 import com.tterrag.registrate.util.entry.BlockEntry;
 import net.minecraft.client.renderer.texture.TextureAtlas;
@@ -75,11 +82,21 @@ public abstract class ModelBakeryMixin {
             for (TagPrefix tagPrefix : TagPrefix.values()) {
                 MaterialIconType type = tagPrefix.materialIconType();
 
+                if (GTBlocks.CABLE_BLOCKS.contains(tagPrefix, material)) {
+                    BlockEntry<CableBlock> blockEntry = GTBlocks.CABLE_BLOCKS.get(tagPrefix, material);
+                    if (blockEntry != null && blockEntry.isPresent()) {
+                        CableBlock block = blockEntry.get();
+                        if (!block.pipeType.isCable()) block.renderer.getPipeModel().sideTexture = gtceu$generateBlockTexture(iconSet, MaterialIconType.wire);
+                        block.renderer.getPipeModel().endTexture = gtceu$generateBlockTexture(iconSet, MaterialIconType.wire);
+                    }
+                }
+
+
                 if (material.hasProperty(PropertyKey.ORE)) {
                     BlockEntry<? extends MaterialBlock> blockEntry = GTBlocks.MATERIAL_BLOCKS.get(tagPrefix, material);
                     if (blockEntry != null && blockEntry.isPresent()) {
                         MaterialBlock block = blockEntry.get();
-                        if (block.getRenderer(block.defaultBlockState()) instanceof OreBlockRenderer oreRenderer) {
+                        if (block.renderer instanceof OreBlockRenderer oreRenderer) {
                             oreRenderer.setOverlayTexture(gtceu$generateBlockTexture(iconSet, type));
                         }
                         continue prefixLoop;
