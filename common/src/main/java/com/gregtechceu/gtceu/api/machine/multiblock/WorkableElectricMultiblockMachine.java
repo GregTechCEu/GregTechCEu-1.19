@@ -44,7 +44,7 @@ public class WorkableElectricMultiblockMachine extends WorkableMultiblockMachine
     //////////////////////////////////////
 
     @Override
-    public void  addDisplayText(List<Component> textList) {
+    public void addDisplayText(List<Component> textList) {
         IDisplayUIMachine.super.addDisplayText(textList);
         if (isFormed()) {
             var maxVoltage = getMaxVoltage();

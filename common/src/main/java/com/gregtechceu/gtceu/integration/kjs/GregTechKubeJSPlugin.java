@@ -20,23 +20,28 @@ import com.gregtechceu.gtceu.api.data.worldgen.WorldGenLayers;
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
 import com.gregtechceu.gtceu.api.item.tool.GTToolType;
 import com.gregtechceu.gtceu.api.machine.MachineDefinition;
+import com.gregtechceu.gtceu.api.machine.multiblock.CleanroomType;
+import com.gregtechceu.gtceu.api.machine.multiblock.CoilWorkableElectricMultiblockMachine;
 import com.gregtechceu.gtceu.api.machine.multiblock.PartAbility;
+import com.gregtechceu.gtceu.api.machine.multiblock.WorkableElectricMultiblockMachine;
 import com.gregtechceu.gtceu.api.pattern.FactoryBlockPattern;
 import com.gregtechceu.gtceu.api.pattern.MultiblockShapeInfo;
 import com.gregtechceu.gtceu.api.pattern.Predicates;
 import com.gregtechceu.gtceu.api.recipe.GTRecipeType;
 import com.gregtechceu.gtceu.api.registry.GTRegistries;
+import com.gregtechceu.gtceu.api.registry.registrate.MachineBuilder;
+import com.gregtechceu.gtceu.api.registry.registrate.MultiblockMachineBuilder;
 import com.gregtechceu.gtceu.common.data.*;
 import com.gregtechceu.gtceu.integration.kjs.builders.*;
 import com.gregtechceu.gtceu.integration.kjs.builders.machine.*;
 import com.gregtechceu.gtceu.integration.kjs.builders.prefix.BasicTagPrefixBuilder;
 import com.gregtechceu.gtceu.integration.kjs.builders.prefix.OreTagPrefixBuilder;
 import com.gregtechceu.gtceu.integration.kjs.helpers.MaterialStackWrapper;
-import com.gregtechceu.gtceu.integration.kjs.recipe.GTRecipeBuilderJS;
+import com.gregtechceu.gtceu.integration.kjs.recipe.GTRecipeSchema;
 import com.mojang.serialization.DataResult;
 import dev.latvian.mods.kubejs.KubeJSPlugin;
-import dev.latvian.mods.kubejs.RegistryObjectBuilderTypes;
-import dev.latvian.mods.kubejs.recipe.RegisterRecipeTypesEvent;
+import dev.latvian.mods.kubejs.recipe.schema.RegisterRecipeSchemasEvent;
+import dev.latvian.mods.kubejs.registry.RegistryInfo;
 import dev.latvian.mods.kubejs.script.BindingsEvent;
 import dev.latvian.mods.kubejs.script.ScriptType;
 import dev.latvian.mods.kubejs.util.ClassFilter;
@@ -69,18 +74,20 @@ public class GregTechKubeJSPlugin extends KubeJSPlugin {
 
         GTRegistryObjectBuilderTypes.RECIPE_TYPE.addType("basic", GTRecipeTypeBuilder.class, GTRecipeTypeBuilder::new, true);
 
-        GTRegistryObjectBuilderTypes.MACHINE.addType("simple", SimpleMachineBuilder.class, SimpleMachineBuilder::new, true);
-        GTRegistryObjectBuilderTypes.MACHINE.addType("steam", SteamMachineBuilder.class, SteamMachineBuilder::new, false);
-        GTRegistryObjectBuilderTypes.MACHINE.addType("generator", GeneratorBuilder.class, GeneratorBuilder::new, false);
-        GTRegistryObjectBuilderTypes.MACHINE.addType("multiblock", MultiblockBuilder.class, MultiblockBuilder::new, false);
-        GTRegistryObjectBuilderTypes.MACHINE.addType("kinetic", KineticMachineBuilder.class, KineticMachineBuilder::new, false);
+        GTRegistryObjectBuilderTypes.MACHINE.addType("simple", SimpleMachineBuilder.class, (id, args) -> SimpleMachineBuilder.createAll(id.getPath(), args), true);
+        GTRegistryObjectBuilderTypes.MACHINE.addType("custom", CustomTieredMachineBuilder.class, (id, args) -> CustomTieredMachineBuilder.createAll(id.getPath(), args), false);
+        GTRegistryObjectBuilderTypes.MACHINE.addType("steam", SteamMachineBuilder.class, (id, args) -> SteamMachineBuilder.createBoth(id.getPath(), args), false);
+        GTRegistryObjectBuilderTypes.MACHINE.addType("generator", GeneratorBuilder.class, (id, args) -> GeneratorBuilder.createAll(id.getPath(), args), false);
+        GTRegistryObjectBuilderTypes.MACHINE.addType("multiblock", CustomMultiblockBuilder.class, (id, args) -> CustomMultiblockBuilder.createMultiblock(id.getPath(), args), false);
+        GTRegistryObjectBuilderTypes.MACHINE.addType("primitive", CustomMultiblockBuilder.class, (id, args) -> CustomMultiblockBuilder.createPrimitiveMultiblock(id.getPath(), args), false);
+        GTRegistryObjectBuilderTypes.MACHINE.addType("kinetic", KineticMachineBuilder.class, (id, args) -> KineticMachineBuilder.createAll(id.getPath(), args), false);
 
         GTRegistryObjectBuilderTypes.WORLD_GEN_LAYER.addType("basic", WorldGenLayerBuilder.class, WorldGenLayerBuilder::new, true);
 
         GTRegistryObjectBuilderTypes.TAG_PREFIX.addType("basic", BasicTagPrefixBuilder.class, BasicTagPrefixBuilder::new, true);
         GTRegistryObjectBuilderTypes.TAG_PREFIX.addType("ore", OreTagPrefixBuilder.class, OreTagPrefixBuilder::new, false);
 
-        RegistryObjectBuilderTypes.BLOCK.addType("gtceu:coil", CoilBlockBuilder.class, CoilBlockBuilder::new);
+        RegistryInfo.BLOCK.addType("gtceu:coil", CoilBlockBuilder.class, CoilBlockBuilder::new);
     }
 
     @Override
@@ -98,12 +105,11 @@ public class GregTechKubeJSPlugin extends KubeJSPlugin {
     }
 
     @Override
-    public void registerRecipeTypes(RegisterRecipeTypesEvent event) {
-        super.registerRecipeTypes(event);
+    public void registerRecipeSchemas(RegisterRecipeSchemasEvent event) {
+        super.registerRecipeSchemas(event);
 
-        event.register(GTCEu.id("gt_recipe_serializer"), GTRecipeBuilderJS::new);
         for (var entry : GTRegistries.RECIPE_TYPES.entries()) {
-            event.register(entry.getKey(), GTRecipeBuilderJS::new);
+            event.register(entry.getKey(), GTRecipeSchema.SCHEMA);
         }
     }
 
@@ -124,6 +130,7 @@ public class GregTechKubeJSPlugin extends KubeJSPlugin {
         event.add("UnificationEntry", UnificationEntry.class);
         event.add("RecipeCapability", RecipeCapability.class);
         event.add("GTFluidTypes", FluidTypes.class);
+        event.add("CleanroomType", CleanroomType.class);
 
         event.add("GTValues", GTValues.class);
         event.add("GTMaterialIconSet", MaterialIconSet.class);
